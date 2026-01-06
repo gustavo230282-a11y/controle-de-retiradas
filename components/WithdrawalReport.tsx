@@ -17,14 +17,14 @@ const WithdrawalReport: React.FC<Props> = ({ onBack }) => {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  const handleGenerateReport = (e: React.FormEvent) => {
+  const handleGenerateReport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!startDate || !endDate) {
       alert('Por favor, selecione as datas inicial e final.');
       return;
     }
 
-    const allData = WithdrawalService.getAll();
+    const allData = await WithdrawalService.getAll();
 
     // Create Date objects for comparison
     // Set start date to 00:00:00

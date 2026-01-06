@@ -14,8 +14,13 @@ const WithdrawalList: React.FC<Props> = ({ onBack }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    setWithdrawals(WithdrawalService.getAll());
+    loadWithdrawals();
   }, []);
+
+  const loadWithdrawals = async () => {
+    const data = await WithdrawalService.getAll();
+    setWithdrawals(data);
+  };
 
   const filtered = withdrawals.filter(w =>
     w.nfNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||

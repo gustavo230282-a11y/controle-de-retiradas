@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, UserLevel } from '../types';
 import { AuthService } from '../services/db';
 import { UserPlus, Shield, Save } from 'lucide-react';
@@ -14,7 +14,18 @@ const AdminPanel: React.FC<Props> = ({ onBack }) => {
   const [password, setPassword] = useState('');
   const [level, setLevel] = useState<UserLevel>(UserLevel.OPERATOR);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    const data = await AuthService.getAllUsers();
+    setUsers(data);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) return;
 
@@ -26,14 +37,13 @@ const AdminPanel: React.FC<Props> = ({ onBack }) => {
       level
     };
 
-    AuthService.createUser(newUser);
+    await AuthService.createUser(newUser);
     alert('Usuário criado com sucesso!');
     setName('');
     setEmail('');
     setPassword('');
+    loadUsers(); // Reload list
   };
-
-  const users = AuthService.getAllUsers();
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 animate-fade-in">

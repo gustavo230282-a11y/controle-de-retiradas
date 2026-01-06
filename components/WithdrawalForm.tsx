@@ -51,34 +51,54 @@ const WithdrawalForm: React.FC<Props> = ({ currentUser, onSuccess, onCancel }) =
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!recipientName || !nfNumber || !imagePreview) {
-      alert('Por favor, preencha todos os campos e anexe a foto do canhoto.');
+    if (!recipientName || !nfNumber) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    if (!fileInputRef.current?.files?.[0] && !imagePreview) {
+      alert('Por favor, anexe a foto do canhoto.');
       return;
     }
 
     setLoading(true);
 
-    // Simulate network delay
-    setTimeout(() => {
+    try {
+      let publicUrl = imagePreview;
+
+      // If we have a file, upload it
+      if (fileInputRef.current?.files?.[0]) {
+        const file = fileInputRef.current.files[0];
+        const url = await WithdrawalService.uploadImage(file);
+        if (!url) throw new Error("Falha no upload da imagem");
+        publicUrl = url;
+      }
+
+      if (!publicUrl) throw new Error("URL da imagem não disponível");
+
       const newWithdrawal: Withdrawal = {
         id: crypto.randomUUID(),
         userId: currentUser.id,
         userName: currentUser.name,
         recipientName,
         nfNumber,
-        imageUrl: imagePreview,
+        imageUrl: publicUrl,
         timestamp: new Date().toISOString(),
         latitude: location?.lat,
         longitude: location?.lng
       };
 
-      WithdrawalService.save(newWithdrawal);
-      setLoading(false);
+      await WithdrawalService.save(newWithdrawal);
       alert('Retirada registrada com sucesso!');
       onSuccess();
-    }, 800);
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao registrar retirada. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

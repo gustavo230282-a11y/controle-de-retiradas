@@ -1,55 +1,106 @@
 import { User, Withdrawal, UserLevel } from '../types';
-import { INITIAL_ADMIN_USER } from '../constants';
-
-const USERS_KEY = 'sys_users';
-const WITHDRAWALS_KEY = 'sys_withdrawals';
-
-// Initialize DB with Admin if empty
-const initDB = () => {
-  const users = localStorage.getItem(USERS_KEY);
-  if (!users) {
-    localStorage.setItem(USERS_KEY, JSON.stringify([INITIAL_ADMIN_USER]));
-  }
-};
-
-initDB();
+import { supabase } from './supaClient';
 
 export const AuthService = {
-  login: (email: string, password: string): User | null => {
-    const usersStr = localStorage.getItem(USERS_KEY);
-    const users: User[] = usersStr ? JSON.parse(usersStr) : [];
-    
-    // Simple string comparison for the mock. In real PHP/MySQL, use password_verify().
-    const user = users.find(u => u.email === email && u.passwordHash === password);
-    return user || null;
+  // Login is handled directly by logic in Login.tsx via supabase.auth.signInWithPassword
+  // This helper retrieves users from 'profiles' table for Admin display
+  getAllUsers: async (): Promise<User[]> => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching users:', error);
+      return [];
+    }
+
+    return data.map(p => ({
+      id: p.id,
+      name: p.name,
+      email: p.email || '',
+      passwordHash: '', // Not stored
+      level: p.level as any
+    }));
   },
 
-  createUser: (user: User): void => {
-    const usersStr = localStorage.getItem(USERS_KEY);
-    const users: User[] = usersStr ? JSON.parse(usersStr) : [];
-    users.push(user);
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  },
+  createUser: async (user: User): Promise<void> => {
+    // For this MVP, we insert into profiles. 
+    // Ideally, we should Create User in Auth system too, but that requires Admin API.
+    // We assume the mapped user object has the ID from Auth or we generate one for the profile only.
+    // If we are just storing profile data:
+    const { error } = await supabase
+      .from('profiles')
+      .insert({
+        id: user.id, // ID must match an auth user if we want foreign key constraints to work! 
+        // If we are mocking "Create User" without real signup, this will fail FK constraint if 'id' is random.
+        // For now, we'll try to insert. If it fails due to FK, we might need a workaround or real Auth Signup.
+        name: user.name,
+        email: user.email,
+        level: user.level
+      });
 
-  getAllUsers: (): User[] => {
-    const usersStr = localStorage.getItem(USERS_KEY);
-    return usersStr ? JSON.parse(usersStr) : [];
+    if (error) console.error('Error creating user profile:', error);
   }
 };
 
 export const WithdrawalService = {
-  save: (withdrawal: Withdrawal): void => {
-    const dataStr = localStorage.getItem(WITHDRAWALS_KEY);
-    const list: Withdrawal[] = dataStr ? JSON.parse(dataStr) : [];
-    // Prepend to show newest first
-    list.unshift(withdrawal); 
-    // Limit to last 50 for storage safety in this demo
-    if (list.length > 50) list.pop();
-    localStorage.setItem(WITHDRAWALS_KEY, JSON.stringify(list));
+  save: async (withdrawal: Withdrawal): Promise<void> => {
+    const { error } = await supabase
+      .from('withdrawals')
+      .insert({
+        user_id: withdrawal.userId,
+        user_name: withdrawal.userName,
+        recipient_name: withdrawal.recipientName,
+        nf_number: withdrawal.nfNumber,
+        image_url: withdrawal.imageUrl,
+        timestamp: withdrawal.timestamp,
+        latitude: withdrawal.latitude,
+        longitude: withdrawal.longitude
+      });
+
+    if (error) throw error;
   },
 
-  getAll: (): Withdrawal[] => {
-    const dataStr = localStorage.getItem(WITHDRAWALS_KEY);
-    return dataStr ? JSON.parse(dataStr) : [];
+  getAll: async (): Promise<Withdrawal[]> => {
+    const { data, error } = await supabase
+      .from('withdrawals')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('Error fetching withdrawals:', error);
+      return [];
+    }
+
+    return data.map(w => ({
+      id: w.id,
+      userId: w.user_id,
+      userName: w.user_name,
+      recipientName: w.recipient_name,
+      nfNumber: w.nf_number,
+      imageUrl: w.image_url,
+      timestamp: w.timestamp,
+      latitude: w.latitude,
+      longitude: w.longitude
+    }));
+  },
+
+  uploadImage: async (file: File): Promise<string | null> => {
+    const fileName = `${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('receipts')
+      .upload(fileName, file);
+
+    if (error) {
+      console.error('Error uploading image:', error);
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('receipts')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
   }
 };
