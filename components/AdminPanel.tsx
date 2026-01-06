@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { User, UserLevel } from './types';
-import { AuthService } from './services/db';
+import { User, UserLevel } from '../types';
+import { AuthService } from '../services/db';
 import { UserPlus, Shield, Save } from 'lucide-react';
 import Header from './Header';
 

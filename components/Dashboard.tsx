@@ -1,7 +1,7 @@
 import React from 'react';
 import { PackagePlus, Search, Shield, FileBarChart } from 'lucide-react';
 import Header from './Header';
-import { User, UserLevel, ViewState } from './types';
+import { User, UserLevel, ViewState } from '../types';
 
 interface Props {
   user: User;
