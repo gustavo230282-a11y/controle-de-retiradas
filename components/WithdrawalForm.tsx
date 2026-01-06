@@ -11,13 +11,23 @@ interface Props {
 }
 
 const WithdrawalForm: React.FC<Props> = ({ currentUser, onSuccess, onCancel }) => {
-  const [recipientName, setRecipientName] = useState('');
-  const [nfNumber, setNfNumber] = useState('');
+  // Load drafts from localStorage
+  const [recipientName, setRecipientName] = useState(() => localStorage.getItem('draft_recipient') || '');
+  const [nfNumber, setNfNumber] = useState(() => localStorage.getItem('draft_nf') || '');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState<'pending' | 'success' | 'error'>('pending');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Save drafts
+  useEffect(() => {
+    localStorage.setItem('draft_recipient', recipientName);
+  }, [recipientName]);
+
+  useEffect(() => {
+    localStorage.setItem('draft_nf', nfNumber);
+  }, [nfNumber]);
 
   useEffect(() => {
     if ('geolocation' in navigator) {
@@ -97,6 +107,15 @@ const WithdrawalForm: React.FC<Props> = ({ currentUser, onSuccess, onCancel }) =
       setRecipientName('');
       setNfNumber('');
       setImagePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+
+      // Reset form
+      setRecipientName('');
+      setNfNumber('');
+      setImagePreview(null);
+      localStorage.removeItem('draft_recipient');
+      localStorage.removeItem('draft_nf');
+
       if (fileInputRef.current) fileInputRef.current.value = '';
 
       onSuccess();

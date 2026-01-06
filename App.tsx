@@ -11,7 +11,9 @@ import { supabase } from './services/supaClient';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [currentView, setCurrentView] = useState<ViewState>('dashboard');
+  const [currentView, setCurrentView] = useState<ViewState>(() => {
+    return (localStorage.getItem('app_current_view') as ViewState) || 'dashboard';
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,7 +57,14 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem('app_current_view');
   };
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('app_current_view', currentView);
+    }
+  }, [currentView, currentUser]);
 
   const renderContent = () => {
     if (!currentUser) {
