@@ -91,11 +91,20 @@ const WithdrawalForm: React.FC<Props> = ({ currentUser, onSuccess, onCancel }) =
       };
 
       await WithdrawalService.save(newWithdrawal);
+      await WithdrawalService.save(newWithdrawal);
       alert('Retirada registrada com sucesso!');
+
+      // Reset form
+      setRecipientName('');
+      setNfNumber('');
+      setImagePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Erro ao registrar retirada. Tente novamente.');
+      const msg = error instanceof Error ? error.message : "Erro desconhecido";
+      alert(`Erro ao registrar retirada: ${msg}`);
     } finally {
       setLoading(false);
     }

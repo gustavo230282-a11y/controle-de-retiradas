@@ -87,7 +87,9 @@ export const WithdrawalService = {
   },
 
   uploadImage: async (file: File): Promise<string | null> => {
-    const fileName = `${Date.now()}_${file.name}`;
+    // Sanitize filename: remove non-alphanumeric chars (keep dots and dashes)
+    const sanitized = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
+    const fileName = `${Date.now()}_${sanitized}`;
     const { data, error } = await supabase.storage
       .from('receipts')
       .upload(fileName, file);
