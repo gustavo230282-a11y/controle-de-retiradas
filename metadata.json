@@ -1,0 +1,8 @@
+{
+  "name": "Controle de Retiradas",
+  "description": "Sistema de controle de retirada de mercadorias com registro de canhoto digital.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
