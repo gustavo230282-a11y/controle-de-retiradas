@@ -86,6 +86,15 @@ export const WithdrawalService = {
     }));
   },
 
+  delete: async (id: string): Promise<void> => {
+    const { error } = await supabase
+      .from('withdrawals')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
   uploadImage: async (file: File): Promise<string | null> => {
     // Sanitize filename: remove non-alphanumeric chars (keep dots and dashes)
     const sanitized = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');

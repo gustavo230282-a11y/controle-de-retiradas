@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, X, FileText, Calendar, User as UserIcon, MapPin, Share2 } from 'lucide-react';
+import { Search, Eye, X, FileText, Calendar, User as UserIcon, MapPin, Share2, Trash2 } from 'lucide-react';
 import Header from '../components/Header';
-import { Withdrawal, UserLevel } from '../types';
+import { Withdrawal, UserLevel, User } from '../types';
 import { WithdrawalService } from '../services/db';
 
 interface Props {
   onBack: () => void;
+  currentUser?: User | null;
 }
 
-const WithdrawalList: React.FC<Props> = ({ onBack }) => {
+const WithdrawalList: React.FC<Props> = ({ onBack, currentUser }) => {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -20,6 +21,19 @@ const WithdrawalList: React.FC<Props> = ({ onBack }) => {
   const loadWithdrawals = async () => {
     const data = await WithdrawalService.getAll();
     setWithdrawals(data);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este registro?')) {
+      try {
+        await WithdrawalService.delete(id);
+        alert('Registro excluído com sucesso!');
+        loadWithdrawals();
+      } catch (error) {
+        console.error("Erro ao excluir", error);
+        alert('Erro ao excluir registro.');
+      }
+    }
   };
 
   const filtered = withdrawals.filter(w =>
@@ -110,6 +124,17 @@ const WithdrawalList: React.FC<Props> = ({ onBack }) => {
                   >
                     <Share2 size={20} />
                   </button>
+
+                  {currentUser?.level === UserLevel.ADMIN && (
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+                      aria-label="Excluir"
+                      title="Excluir Registro"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  )}
 
                   {item.latitude && item.longitude && (
                     <button

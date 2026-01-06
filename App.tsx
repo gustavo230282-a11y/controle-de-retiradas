@@ -82,6 +82,7 @@ const App: React.FC = () => {
       case 'list-withdrawals':
         return (
           <WithdrawalList
+            currentUser={currentUser}
             onBack={() => setCurrentView('dashboard')}
           />
         );

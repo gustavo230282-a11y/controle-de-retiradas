@@ -91,7 +91,6 @@ const WithdrawalForm: React.FC<Props> = ({ currentUser, onSuccess, onCancel }) =
       };
 
       await WithdrawalService.save(newWithdrawal);
-      await WithdrawalService.save(newWithdrawal);
       alert('Retirada registrada com sucesso!');
 
       // Reset form
